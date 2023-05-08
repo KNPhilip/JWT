@@ -7,6 +7,12 @@ namespace JWT.Controllers
     public class AuthController : ControllerBase
     {
         public static User user = new();
+        private static IAuthService _authService;
+
+        public AuthController(IAuthService authService)
+        {
+            _authService = authService;
+        }
 
         [HttpPost("Register"), AllowAnonymous]
         public async Task<ActionResult<User>> Register(UserDto request)
@@ -40,7 +46,7 @@ namespace JWT.Controllers
                     return BadRequest("Incorrect password.");
                 }
 
-                return Ok("JWT");
+                return Ok(await _authService.CreateToken(user));
             }
             catch (Exception e)
             {
