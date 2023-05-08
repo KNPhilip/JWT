@@ -9,7 +9,7 @@
             _configuration = configuration;
         }
 
-        public async Task<ActionResult<string>> CreateToken(User user)
+        public async Task<ActionResult<string>> CreateTokenAsync(User user)
         {
             var jwt = "";
 

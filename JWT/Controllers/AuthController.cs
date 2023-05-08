@@ -1,6 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
-
-namespace JWT.Controllers
+﻿namespace JWT.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
@@ -12,6 +10,13 @@ namespace JWT.Controllers
         public AuthController(IAuthService authService)
         {
             _authService = authService;
+        }
+
+        [HttpGet("Message"), Authorize(Roles = "Admin")]
+        public async Task<ActionResult<string>> GetName()
+        {
+            await Task.Run(() => {});
+            return Ok("Hi.");
         }
 
         [HttpPost("Register"), AllowAnonymous]
@@ -46,7 +51,7 @@ namespace JWT.Controllers
                     return BadRequest("Incorrect password.");
                 }
 
-                return Ok(await _authService.CreateToken(user));
+                return Ok(await _authService.CreateTokenAsync(user));
             }
             catch (Exception e)
             {
