@@ -1,8 +1,51 @@
-﻿namespace JWT.Controllers
+﻿using Microsoft.AspNetCore.Authorization;
+
+namespace JWT.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
     public class AuthController : ControllerBase
     {
+        public static User user = new();
+
+        [HttpPost("Register"), AllowAnonymous]
+        public async Task<ActionResult<User>> Register(UserDto request)
+        {
+            try
+            {
+                await Task.Run(() =>
+                {
+                    user = (user, request).Adapt<User>();
+                });
+
+                return Ok(user);
+            }
+            catch (Exception e)
+            {
+                return BadRequest($"Something went wrong: {e.Message}");
+            }
+        }
+
+        [HttpPost("Login"), AllowAnonymous]
+        public async Task<ActionResult<string>> Login(UserDto request)
+        {
+            try
+            {
+                if (request.Username != user.Username)
+                {
+                    return BadRequest("User not found.");
+                }
+                if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
+                {
+                    return BadRequest("Incorrect password.");
+                }
+
+                return Ok("JWT");
+            }
+            catch (Exception e)
+            {
+                return BadRequest($"Something went wrong: {e.Message}");
+            }
+        }
     }
 }
