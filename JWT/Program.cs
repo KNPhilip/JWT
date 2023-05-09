@@ -77,4 +77,11 @@ static void ConfigureMapster()
         .Map(dest => dest.PasswordHash, src => BCrypt.Net.BCrypt.HashPassword(src.dto.Password))
         .Map(dest => dest, src => src.baseUser)
         .IgnoreNonMapped(true);
+
+    config.ForType<(User baseUser, RefreshToken token), User>()
+        .Map(dest => dest.RefreshToken, src => src.token.Token)
+        .Map(dest => dest.TokenCreated, src => src.token.Created)
+        .Map(dest => dest.TokenExpires, src => src.token.Expires)
+        .Map(dest => dest, src => src.baseUser)
+        .IgnoreNonMapped(true);
 }

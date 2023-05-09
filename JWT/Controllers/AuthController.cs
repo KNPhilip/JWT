@@ -83,10 +83,7 @@
             };
 
             Response.Cookies.Append("refreshToken", newRefreshToken.Token, cookieOptions);
-
-            user.RefreshToken = newRefreshToken.Token;
-            user.TokenCreated = newRefreshToken.Created;
-            user.TokenExpires = newRefreshToken.Expires;
+            user = (user, newRefreshToken).Adapt<User>();
         }
     }
 }
