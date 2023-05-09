@@ -12,13 +12,6 @@
             _authService = authService;
         }
 
-        [HttpGet("Message"), Authorize(Roles = "Admin")]
-        public async Task<ActionResult<string>> GetName()
-        {
-            await Task.Run(() => {});
-            return Ok("Hi.");
-        }
-
         [HttpPost("Register"), AllowAnonymous]
         public async Task<ActionResult<User>> Register(UserDto request)
         {
