@@ -4,6 +4,6 @@
     {
         public string GetNameFromClaims();
 
-        public object GetRolesFromClaims();
+        public List<string> GetRolesFromClaims();
     }
 }

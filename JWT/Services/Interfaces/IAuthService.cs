@@ -2,6 +2,8 @@
 {
     public interface IAuthService
     {
-        Task<ActionResult<string>> CreateTokenAsync(User user);
+        string CreateToken(User user);
+
+        RefreshToken CreateRefreshToken();
     }
 }

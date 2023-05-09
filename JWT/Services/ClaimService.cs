@@ -20,9 +20,9 @@
             return result;
         }
 
-        public object GetRolesFromClaims()
+        public List<string> GetRolesFromClaims()
         {
-            object result = new {};
+            var result = new List<string>();
             if (_httpContextAccessor.HttpContext != null)
             {
                 result = _httpContextAccessor.HttpContext.User.Claims

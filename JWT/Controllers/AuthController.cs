@@ -13,15 +13,11 @@
         }
 
         [HttpPost("Register"), AllowAnonymous]
-        public async Task<ActionResult<User>> Register(UserDto request)
+        public ActionResult<User> Register(UserDto request)
         {
             try
             {
-                await Task.Run(() =>
-                {
-                    user = (user, request).Adapt<User>();
-                });
-
+                user = (user, request).Adapt<User>();
                 return Ok(user);
             }
             catch (Exception e)
@@ -31,7 +27,7 @@
         }
 
         [HttpPost("Login"), AllowAnonymous]
-        public async Task<ActionResult<string>> Login(UserDto request)
+        public ActionResult<string> Login(UserDto request)
         {
             try
             {
@@ -44,12 +40,53 @@
                     return BadRequest("Incorrect password.");
                 }
 
-                return Ok(await _authService.CreateTokenAsync(user));
+                var token = _authService.CreateToken(user);
+
+                var refreshToken = _authService.CreateRefreshToken();
+                SetRefreshToken(refreshToken);
+
+                return Ok(token);
             }
             catch (Exception e)
             {
                 return BadRequest($"Something went wrong: {e.Message}");
             }
+        }
+
+        [HttpPost("Refresh-Token")]
+        public async Task<ActionResult<string>> RefreshToken()
+        {
+            var refreshToken = Request.Cookies["refreshToken"];
+
+            if (!user.RefreshToken.Equals(refreshToken))
+            {
+                return Unauthorized("Invalid Refresh-Token.");
+            }
+            else if (user.TokenExpires < DateTime.Now)
+            {
+                return Unauthorized("The Refresh-Token has expired.");
+            }
+
+            var token = _authService.CreateToken(user);
+            var newRefreshToken = _authService.CreateRefreshToken();
+            SetRefreshToken(newRefreshToken);
+
+            return Ok(token);
+        }
+
+        private void SetRefreshToken(RefreshToken newRefreshToken)
+        {
+            var cookieOptions = new CookieOptions
+            {
+                HttpOnly = true,
+                Expires = newRefreshToken.Expires
+            };
+
+            Response.Cookies.Append("refreshToken", newRefreshToken.Token, cookieOptions);
+
+            user.RefreshToken = newRefreshToken.Token;
+            user.TokenCreated = newRefreshToken.Created;
+            user.TokenExpires = newRefreshToken.Expires;
         }
     }
 }

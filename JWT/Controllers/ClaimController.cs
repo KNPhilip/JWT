@@ -1,7 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-
-namespace JWT.Controllers
+﻿namespace JWT.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
