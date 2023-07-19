@@ -6,10 +6,19 @@
     {
         public static User user = new();
         private static IAuthService _authService;
+        private readonly IUserService _userService;
 
-        public AuthController(IAuthService authService)
+        public AuthController(IAuthService authService, IUserService userService)
         {
             _authService = authService;
+            _userService = userService;
+        }
+
+        [HttpGet, Authorize]
+        public ActionResult<string> GetMe()
+        {
+            string userName = _userService.GetMyName();
+            return Ok(userName);
         }
 
         [HttpPost("Register"), AllowAnonymous]
