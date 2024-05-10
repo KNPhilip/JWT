@@ -1,31 +1,31 @@
+global using System.Text;
+global using System.IdentityModel.Tokens.Jwt;
+global using System.Security.Claims;
+global using System.Security.Cryptography;
 global using Microsoft.AspNetCore.Authorization;
+global using Microsoft.AspNetCore.Authentication.JwtBearer;
+global using Microsoft.IdentityModel.Tokens;
+global using Microsoft.OpenApi.Models;
 global using Microsoft.AspNetCore.Http;
 global using Microsoft.AspNetCore.Mvc;
-global using System.Text;
 global using JWT.Entities;
 global using JWT.Dtos;
 global using JWT.Services;
 global using JWT.Services.Interfaces;
-global using Microsoft.IdentityModel.Tokens;
-global using System.IdentityModel.Tokens.Jwt;
-global using System.Security.Claims;
-global using System.Security.Cryptography;
+global using Swashbuckle.AspNetCore.Filters;
 global using Mapster;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.OpenApi.Models;
-using Swashbuckle.AspNetCore.Filters;
 
-var builder = WebApplication.CreateBuilder(args);
-
-// Add services to the container.
+WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
+
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IClaimService, ClaimService>();
 builder.Services.AddScoped<IUserService, UserService>();
+
 builder.Services.AddHttpContextAccessor();
+
 builder.Services.AddSwaggerGen(options => {
     options.AddSecurityDefinition("oauth2", new OpenApiSecurityScheme
     {
@@ -37,6 +37,7 @@ builder.Services.AddSwaggerGen(options => {
 
     options.OperationFilter<SecurityRequirementsOperationFilter>();
 });
+
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options => {
         options.TokenValidationParameters = new TokenValidationParameters
@@ -47,22 +48,20 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateAudience = false
         };
     });
+
 builder.Services.AddCors(options => options.AddPolicy(name: "NgOrigins",
     policy =>
     {
         policy.WithOrigins("http://localhost:4200").AllowAnyMethod().AllowAnyHeader();
     }));
 
-var app = builder.Build();
+WebApplication app = builder.Build();
 
 ConfigureMapster();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+app.UseSwagger();
+
+app.UseSwaggerUI();
 
 app.UseCors("NgOrigins");
 
@@ -78,7 +77,7 @@ app.Run();
 
 static void ConfigureMapster()
 {
-    var config = TypeAdapterConfig.GlobalSettings;
+    TypeAdapterConfig config = TypeAdapterConfig.GlobalSettings;
 
     config.ForType<(User baseUser, UserDto dto), User>()
         .Map(dest => dest.Username, src => src.dto.Username)

@@ -1,42 +1,36 @@
-﻿namespace JWT.Controllers
+﻿namespace JWT.Controllers;
+
+[Route("api/[controller]")]
+[ApiController]
+public sealed class ClaimController(IClaimService claimService) : ControllerBase
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class ClaimController : ControllerBase
+    private readonly IClaimService _claimService = claimService;
+
+    [HttpGet("NameFromClaims"), Authorize(Roles = "Admin")]
+    public ActionResult<object> NameFromClaims()
     {
-        private readonly IClaimService _claimService;
-
-        public ClaimController(IClaimService claimService)
+        try
         {
-            _claimService = claimService;
+            string name = _claimService.GetNameFromClaims();
+            return Ok(new { name });
         }
-
-        [HttpGet("NameFromClaims"), Authorize(Roles = "Admin")]
-        public ActionResult<object> NameFromClaims()
+        catch (Exception e)
         {
-            try
-            {
-                var name = _claimService.GetNameFromClaims();
-                return Ok(new { name });
-            }
-            catch (Exception e)
-            {
-                return BadRequest($"Something went wrong: {e.Message}");
-            }
+            return BadRequest($"Something went wrong: {e.Message}");
         }
+    }
 
-        [HttpGet("RolesFromClaims"), Authorize(Roles = "Admin")]
-        public ActionResult<object> RolesFromClaims()
+    [HttpGet("RolesFromClaims"), Authorize(Roles = "Admin")]
+    public ActionResult<object> RolesFromClaims()
+    {
+        try
         {
-            try
-            {
-                var claims = _claimService.GetRolesFromClaims();
-                return Ok(new { claims });
-            }
-            catch (Exception e)
-            {
-                return BadRequest($"Something went wrong: {e.Message}");
-            }
+            List<string> claims = _claimService.GetRolesFromClaims();
+            return Ok(new { claims });
+        }
+        catch (Exception e)
+        {
+            return BadRequest($"Something went wrong: {e.Message}");
         }
     }
 }

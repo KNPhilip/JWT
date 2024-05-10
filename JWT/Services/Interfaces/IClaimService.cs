@@ -1,9 +1,7 @@
-﻿namespace JWT.Services.Interfaces
-{
-    public interface IClaimService
-    {
-        public string GetNameFromClaims();
+﻿namespace JWT.Services.Interfaces;
 
-        public List<string> GetRolesFromClaims();
-    }
+public interface IClaimService
+{
+    public string GetNameFromClaims();
+    public List<string> GetRolesFromClaims();
 }

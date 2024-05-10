@@ -1,98 +1,97 @@
-﻿namespace JWT.Controllers
+﻿namespace JWT.Controllers;
+
+[Route("api/[controller]")]
+[ApiController]
+public sealed class AuthController : ControllerBase
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class AuthController : ControllerBase
+    public static User user = new();
+    private static IAuthService _authService;
+    private readonly IUserService _userService;
+
+    public AuthController(IAuthService authService, IUserService userService)
     {
-        public static User user = new();
-        private static IAuthService _authService;
-        private readonly IUserService _userService;
+        _authService = authService;
+        _userService = userService;
+    }
 
-        public AuthController(IAuthService authService, IUserService userService)
+    [HttpGet, Authorize]
+    public ActionResult<string> GetMe()
+    {
+        string userName = _userService.GetMyName();
+        return Ok(userName);
+    }
+
+    [HttpPost("Register"), AllowAnonymous]
+    public ActionResult<User> Register(UserDto request)
+    {
+        try
         {
-            _authService = authService;
-            _userService = userService;
+            user = (user, request).Adapt<User>();
+            return Ok(user);
         }
-
-        [HttpGet, Authorize]
-        public ActionResult<string> GetMe()
+        catch (Exception e)
         {
-            string userName = _userService.GetMyName();
-            return Ok(userName);
+            return BadRequest($"Something went wrong: {e.Message}");
         }
+    }
 
-        [HttpPost("Register"), AllowAnonymous]
-        public ActionResult<User> Register(UserDto request)
+    [HttpPost("Login"), AllowAnonymous]
+    public ActionResult<string> Login(UserDto request)
+    {
+        try
         {
-            try
+            if (request.Username != user.Username)
             {
-                user = (user, request).Adapt<User>();
-                return Ok(user);
+                return BadRequest("User not found.");
             }
-            catch (Exception e)
+            if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
             {
-                return BadRequest($"Something went wrong: {e.Message}");
-            }
-        }
-
-        [HttpPost("Login"), AllowAnonymous]
-        public ActionResult<string> Login(UserDto request)
-        {
-            try
-            {
-                if (request.Username != user.Username)
-                {
-                    return BadRequest("User not found.");
-                }
-                if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
-                {
-                    return BadRequest("Incorrect password.");
-                }
-
-                var token = _authService.CreateToken(user);
-
-                var refreshToken = _authService.CreateRefreshToken();
-                SetRefreshToken(refreshToken);
-
-                return Ok(token);
-            }
-            catch (Exception e)
-            {
-                return BadRequest($"Something went wrong: {e.Message}");
-            }
-        }
-
-        [HttpPost("Refresh-Token")]
-        public async Task<ActionResult<string>> RefreshToken()
-        {
-            var refreshToken = Request.Cookies["refreshToken"];
-
-            if (!user.RefreshToken.Equals(refreshToken))
-            {
-                return Unauthorized("Invalid Refresh-Token.");
-            }
-            else if (user.TokenExpires < DateTime.Now)
-            {
-                return Unauthorized("The Refresh-Token has expired.");
+                return BadRequest("Incorrect password.");
             }
 
-            var token = _authService.CreateToken(user);
-            var newRefreshToken = _authService.CreateRefreshToken();
-            SetRefreshToken(newRefreshToken);
+            string token = _authService.CreateToken(user);
+
+            RefreshToken refreshToken = _authService.CreateRefreshToken();
+            SetRefreshToken(refreshToken);
 
             return Ok(token);
         }
-
-        private void SetRefreshToken(RefreshToken newRefreshToken)
+        catch (Exception e)
         {
-            var cookieOptions = new CookieOptions
-            {
-                HttpOnly = true,
-                Expires = newRefreshToken.Expires
-            };
-
-            Response.Cookies.Append("refreshToken", newRefreshToken.Token, cookieOptions);
-            user = (user, newRefreshToken).Adapt<User>();
+            return BadRequest($"Something went wrong: {e.Message}");
         }
+    }
+
+    [HttpPost("Refresh-Token")]
+    public async Task<ActionResult<string>> RefreshToken()
+    {
+        string refreshToken = Request.Cookies["refreshToken"];
+
+        if (!user.RefreshToken.Equals(refreshToken))
+        {
+            return Unauthorized("Invalid Refresh-Token.");
+        }
+        else if (user.TokenExpires < DateTime.Now)
+        {
+            return Unauthorized("The Refresh-Token has expired.");
+        }
+
+        string token = _authService.CreateToken(user);
+        RefreshToken newRefreshToken = _authService.CreateRefreshToken();
+        SetRefreshToken(newRefreshToken);
+
+        return Ok(token);
+    }
+
+    private void SetRefreshToken(RefreshToken newRefreshToken)
+    {
+        CookieOptions cookieOptions = new()
+        {
+            HttpOnly = true,
+            Expires = newRefreshToken.Expires
+        };
+
+        Response.Cookies.Append("refreshToken", newRefreshToken.Token, cookieOptions);
+        user = (user, newRefreshToken).Adapt<User>();
     }
 }

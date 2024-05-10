@@ -1,7 +1,6 @@
-﻿namespace JWT.Services.Interfaces
+﻿namespace JWT.Services.Interfaces;
+
+public interface IUserService
 {
-    public interface IUserService
-    {
-        string GetMyName();
-    }
+    string GetMyName();
 }

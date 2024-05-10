@@ -1,46 +1,45 @@
-﻿namespace JWT.Services
+﻿namespace JWT.Services;
+
+public sealed class AuthService : IAuthService
 {
-    public class AuthService : IAuthService
+    private static IConfiguration _configuration;
+
+    public AuthService(IConfiguration configuration)
     {
-        private static IConfiguration _configuration;
+        _configuration = configuration;
+    }
 
-        public AuthService(IConfiguration configuration)
+    public string CreateToken(User user)
+    {
+        List<Claim> claims =
+        [
+            new Claim(ClaimTypes.Name, user.Username),
+            new Claim(ClaimTypes.Role, "Admin")
+        ];
+
+        SymmetricSecurityKey key = new(Encoding.UTF8.GetBytes(_configuration.GetSection("AppSettings:Token").Value));
+
+        SigningCredentials creds = new(key, SecurityAlgorithms.HmacSha512Signature);
+
+        JwtSecurityToken token = new(
+            claims: claims,
+            expires: DateTime.Now.AddHours(2),
+            signingCredentials: creds
+        );
+
+        string jwt = new JwtSecurityTokenHandler().WriteToken(token);
+
+        return jwt;
+    }
+
+    public RefreshToken CreateRefreshToken()
+    {
+        RefreshToken refreshToken = new()
         {
-            _configuration = configuration;
-        }
+            Token = Convert.ToBase64String(RandomNumberGenerator.GetBytes(64)),
+            Expires = DateTime.Now.AddDays(7),
+        };
 
-        public string CreateToken(User user)
-        {
-            List<Claim> claims = new()
-            {
-                new Claim(ClaimTypes.Name, user.Username),
-                new Claim(ClaimTypes.Role, "Admin")
-            };
-
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration.GetSection("AppSettings:Token").Value));
-
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
-
-            var token = new JwtSecurityToken(
-                claims: claims,
-                expires: DateTime.Now.AddHours(2),
-                signingCredentials: creds
-            );
-
-            var jwt = new JwtSecurityTokenHandler().WriteToken(token);
-
-            return jwt;
-        }
-
-        public RefreshToken CreateRefreshToken()
-        {
-            var refreshToken = new RefreshToken
-            {
-                Token = Convert.ToBase64String(RandomNumberGenerator.GetBytes(64)),
-                Expires = DateTime.Now.AddDays(7),
-            };
-
-            return refreshToken;
-        }
+        return refreshToken;
     }
 }

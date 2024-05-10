@@ -1,22 +1,17 @@
-﻿namespace JWT.Services
+﻿namespace JWT.Services;
+
+public sealed class UserService(IHttpContextAccessor httpContextAccessor) : IUserService
 {
-    public class UserService : IUserService
+    private readonly IHttpContextAccessor _httpContextAccessor = httpContextAccessor;
+
+    public string GetMyName()
     {
-        private readonly IHttpContextAccessor _httpContextAccessor;
-
-        public UserService(IHttpContextAccessor httpContextAccessor)
+        string result = string.Empty;
+        if (_httpContextAccessor.HttpContext is not null)
         {
-            _httpContextAccessor = httpContextAccessor;
+            result = _httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.Name);
         }
 
-        public string GetMyName()
-        {
-            string result = string.Empty;
-            if (_httpContextAccessor.HttpContext is not null)
-            {
-                result = _httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.Name);
-            }
-            return result;
-        }
+        return result;
     }
 }

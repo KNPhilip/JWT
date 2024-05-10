@@ -1,37 +1,31 @@
-﻿namespace JWT.Services
+﻿namespace JWT.Services;
+
+public sealed class ClaimService(IHttpContextAccessor httpContextAccessor) : IClaimService
 {
-    public class ClaimService : IClaimService
+    private readonly IHttpContextAccessor _httpContextAccessor = httpContextAccessor;
+
+    public string GetNameFromClaims()
     {
-        private readonly IHttpContextAccessor _httpContextAccessor;
-
-        public ClaimService(IHttpContextAccessor httpContextAccessor)
+        string result = string.Empty;
+        if (_httpContextAccessor.HttpContext is not null)
         {
-            _httpContextAccessor = httpContextAccessor;
+            result = _httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.Name);
         }
 
-        public string GetNameFromClaims()
-        {
-            var result = string.Empty;
-            if (_httpContextAccessor.HttpContext != null)
-            {
-                result = _httpContextAccessor.HttpContext.User.FindFirstValue(ClaimTypes.Name);
-            }
+        return result;
+    }
 
-            return result;
+    public List<string> GetRolesFromClaims()
+    {
+        List<string> result = [];
+        if (_httpContextAccessor.HttpContext is not null)
+        {
+            result = _httpContextAccessor.HttpContext.User.Claims
+                .Where(c => c.Type == ClaimTypes.Role)
+                .Select(c => c.Value)
+                .ToList();
         }
 
-        public List<string> GetRolesFromClaims()
-        {
-            var result = new List<string>();
-            if (_httpContextAccessor.HttpContext != null)
-            {
-                result = _httpContextAccessor.HttpContext.User.Claims
-                    .Where(c => c.Type == ClaimTypes.Role)
-                    .Select(c => c.Value)
-                    .ToList();
-            }
-
-            return result;
-        }
+        return result;
     }
 }
